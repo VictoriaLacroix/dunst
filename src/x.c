@@ -903,9 +903,10 @@ static void x_handle_click(XEvent ev)
  */
 static Window get_focused_window(void)
 {
-        Window focused = 0;
+        Window focused = None;
         Atom type;
         int format;
+        int revert;
         unsigned long nitems, bytes_after;
         unsigned char *prop_return = NULL;
         Window root = RootWindow(xctx.dpy, DefaultScreen(xctx.dpy));
@@ -918,6 +919,11 @@ static Window get_focused_window(void)
         if (prop_return) {
                 focused = *(Window *) prop_return;
                 XFree(prop_return);
+        }
+
+        if (focused == None) {
+                /* fallback to XGetInputFocus */
+                XGetInputFocus(xctx.dpy, &focused, &revert);
         }
 
         return focused;
@@ -958,7 +964,7 @@ static int select_screen(XineramaScreenInfo * info, int info_len)
 
                         Window focused = get_focused_window();
 
-                        if (focused == 0) {
+                        if (focused == None) {
                                 /* something went wrong. Fallback to default */
                                 ret = settings.monitor >=
                                     0 ? settings.monitor : XDefaultScreen(xctx.dpy);
